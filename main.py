@@ -1,0 +1,7 @@
+from mongo import m_connect, seeds
+
+
+
+if __name__ == '__main__':
+    print('Hello')
+    seeds()
