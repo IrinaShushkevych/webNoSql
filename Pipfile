@@ -8,6 +8,7 @@ pymongo = "*"
 mongoengine = "*"
 redis = "*"
 configparser = "*"
+redis-lru = "*"
 
 [dev-packages]
 

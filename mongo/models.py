@@ -8,7 +8,8 @@ class Authors(Document):
     description = StringField()
 
 
+
 class Quotes(Document):
-    tags = ListField()
+    tags = ListField(StringField())
     author = ReferenceField('Authors', reverse_delete_rule=2)
     quote = StringField()

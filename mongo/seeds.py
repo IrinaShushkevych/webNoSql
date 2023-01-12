@@ -29,7 +29,7 @@ def add_quotes():
         quotes = json.loads(res)
 
     for el in quotes:
-        author = Authors.objects(fullname=el['author'])
+        author = Authors.objects.get(fullname=el['author'])
         if not author:
             print('---------------------------------------------------------')
             print('Author', el['author'], 'not found')
@@ -39,7 +39,7 @@ def add_quotes():
         else:
             quote = Quotes(
                 tags = el['tags'],
-                author = author[0],
+                author = author,
                 quote = el['quote']
             )
             quote.save()

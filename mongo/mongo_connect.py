@@ -10,4 +10,10 @@ m_db = conf.get('mongo', 'db_name')
 m_domain = conf.get('mongo', 'domain')
 
 url = f'mongodb+srv://{m_user}:{m_pass}@{m_domain}/{m_db}?retryWrites=true&w=majority'
-m_connect = connect(host=url, ssl=True)
+m_connect = None
+
+try:
+    m_connect = connect(host=url, ssl=True)
+except:
+    print('Connection to database failed')
+    quit()
