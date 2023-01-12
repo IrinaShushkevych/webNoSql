@@ -7,8 +7,6 @@ class Authors(Document):
     born_location = StringField(max_length=250)
     description = StringField()
 
-
-
 class Quotes(Document):
     tags = ListField(StringField())
     author = ReferenceField('Authors', reverse_delete_rule=2)
