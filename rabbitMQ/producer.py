@@ -1,15 +1,23 @@
 # docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.11-management
 import pika
-from datetime import datetime
 import sys
-import json
+from bson import json_util
 import os
 import faker
+import configparser
+
+conf = configparser.ConfigParser()
+conf.read('settings.ini')
+host = conf.get('rabbit', 'host')
+port = conf.get('rabbit', 'port')
+login = conf.get('rabbit', 'login')
+password = conf.get('rabbit', 'password')
 
 sys.path.append(os.getcwd())
-from mongo import SendsMessages, User
+from mongo import User
 
 def seeds():
+    User.drop_collection()
     fake = faker.Faker()
     for _ in range(5):
         User(
@@ -28,17 +36,28 @@ def seeds():
             method = 'sms'
             ).save()
 
-def get_message(message):
-    mes = SendsMessages.objects.get(message=message)
-    if not mes:
-        users = User.objects()
-        mes = SendsMessages(message=message, users=users)
-        mes.save()
-    return mes
+def get_users():
+    return User.objects(message_sends=False)
+
+def add_message_to_queue(mes, user, queue, channel):
+    message = {
+        'id_user': user.id,
+        'fullname': ' '.join([user.firstname, user.lastname]),
+        'email': user.email,
+        'message': mes
+    }
+    channel.basic_publish(
+        exchange='ex_message',
+        routing_key=queue,
+        body=json_util.dumps(message).encode(),
+        properties=pika.BasicProperties(
+        delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
+    ))
+    print(" [x] Sent ", mes)
 
 def main():
-    credentials = pika.PlainCredentials('guest', 'guest')
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port=5672, credentials=credentials))
+    credentials = pika.PlainCredentials(login, password)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, port=port, credentials=credentials))
     channel = connection.channel()
 
     channel.exchange_declare(exchange='ex_message', exchange_type='direct')
@@ -47,37 +66,16 @@ def main():
     channel.queue_bind(exchange='ex_message', queue='queue_email')
     channel.queue_bind(exchange='ex_message', queue='queue_sms')
 
-    mes_list = get_message(' '.join(sys.argv[1:]))
-    for el in mes_list.users:
+    users = get_users()
+    mes = ' '.join(sys.argv[1:])
+    for el in users:
         if el.method == 'email':
-            message = {
-                'fullname': ' '.join([el.firstname, el.lastname]),
-                'email': el.email,
-                'message': mes_list.message
-            }
-            channel.basic_publish(
-                exchange='ex_message',
-                routing_key='queue_email',
-                body=json.dumps(message).encode(),
-                properties=pika.BasicProperties(
-                delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-            ))
+            add_message_to_queue(mes, el, 'queue_email', channel)
         if el.method == 'sms':
-            message = {
-                'fullname': ' '.join([el.firstname, el.lastname]),
-                'phone': el.phone,
-                'message': mes_list.message
-            }
-            channel.basic_publish(
-                exchange='ex_message',
-                routing_key='queue_sms',
-                body=json.dumps(message).encode(),
-                properties=pika.BasicProperties(
-                delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-            ))
-        print(" [x] Sent ", message)
+            add_message_to_queue(mes, el, 'queue_sms', channel)
+
     connection.close()
     
 if __name__ == '__main__':
-    # seeds()
+    seeds()
     main()

@@ -1,5 +1,4 @@
 from mongo import fetch_authors, fetch_quotes
-from redis_cache import set, get
 
 def func_help():
     print('Commands:')
@@ -22,13 +21,7 @@ def get_authors(name):
         print('Wrong type of parametr')
         return None
  
-    # result = fetch_author(name_select)
-
-    result = get(f'name:{name_select}')
-
-    if not result:
-        result = fetch_authors(name_select)
-        set(f'name:{name_select}', result)
+    result = fetch_authors(name_select)
 
     print_author(result)
 
@@ -41,13 +34,7 @@ def get_quotes(tags):
         print('Wrong type of parametr')
         return None
 
-    # result = fetch_quotes(tags_select)
-
-    result = get(f'tag:{tags_select}')
-
-    if not result:
-        result = fetch_quotes(tags_select)
-        set(f'tag:{tags_select}', result)
+    result = fetch_quotes(tags_select)
 
     print_quotes(result)
 

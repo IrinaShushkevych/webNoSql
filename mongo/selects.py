@@ -1,7 +1,8 @@
 from mongo import Authors, Quotes
-from redis_cache import cache
+from redis_cache import cache, r_cache
 
 # @cache
+@r_cache(3)
 def fetch_authors(name):
     print('FETCH AUTHOR')
     author = Authors.objects(fullname__iregex = name)
@@ -11,6 +12,7 @@ def fetch_authors(name):
     return result
 
 # @cache
+@r_cache(3)
 def fetch_quotes(tags):
     print('FETCH QUOTE')
     quote = Quotes.objects(tags__iregex = tags)

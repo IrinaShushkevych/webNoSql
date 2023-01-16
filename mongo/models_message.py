@@ -8,7 +8,3 @@ class User(Document):
     phone = StringField(min_length=10, max_length=30)
     method = StringField(choices=['sms', 'email'])
     message_sends = BooleanField(default=False)
-
-class SendsMessages(Document):
-    message = StringField(min_length=2)
-    users = ListField(ReferenceField(User))

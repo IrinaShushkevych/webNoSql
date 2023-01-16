@@ -1,1 +1,1 @@
-from redis_cache.connect import cache, set, get
+from redis_cache.connect import cache, r_cache
